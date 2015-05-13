@@ -132,9 +132,7 @@ public class QLearningAgent extends RLAgent{
 	@Override
 	public void reset() {
 		this.episodeNb =0;
-		//VOTRE CODE
-		//...
-		
+		this.qTable = new HashMap<Etat, Map<Action, Double>>();
 	}
 
 
