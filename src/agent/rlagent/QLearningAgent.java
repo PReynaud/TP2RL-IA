@@ -1,9 +1,6 @@
 package agent.rlagent;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import environnement.Action;
 import environnement.Environnement;
@@ -17,8 +14,6 @@ import environnement.gridworld.EtatGrille;
  */
 public class QLearningAgent extends RLAgent{
 	Map<Etat, Map<Action, Double>> qTable;
-	private double[] values;
-
 
 	/**
 	 * 
@@ -31,7 +26,6 @@ public class QLearningAgent extends RLAgent{
 		super(alpha, gamma,_env);
 
 		this.qTable = new HashMap<Etat, Map<Action, Double>>();
-
 	}
 
 
@@ -44,11 +38,29 @@ public class QLearningAgent extends RLAgent{
 	 */
 	@Override
 	public List<Action> getPolitique(Etat e) {
-		//VOTRE CODE
-		//...
-		return null;
-		
-		
+		List<Action> listActions = new ArrayList<Action>();
+		Map<Action, Double> allActions = this.qTable.get(e);
+
+		if (allActions.isEmpty()){
+			return listActions;
+		}
+
+		Set keys = allActions.keySet();
+		Iterator it = keys.iterator();
+		double maxValue = 0;
+		while (it.hasNext()){
+			Action temp = (Action) it.next();
+			if(allActions.get(temp) < maxValue){
+				maxValue = allActions.get(temp);
+				listActions = new ArrayList<Action>();
+				listActions.add(temp);
+			}
+			if(allActions.get(temp) == maxValue){
+				listActions.add(temp);
+			}
+		}
+
+		return listActions;
 	}
 	
 	/**
@@ -56,8 +68,16 @@ public class QLearningAgent extends RLAgent{
 	 */
 	@Override
 	public double getValeur(Etat e) {
-
-		return 0.0;
+		if(e.estTerminal()){
+			return 0;
+		}
+		else{
+			double maxValue = 0;
+			for(double temp : qTable.get(e).values()){
+				Math.max(maxValue, temp);
+			}
+			return maxValue;
+		}
 	}
 
 	/**
