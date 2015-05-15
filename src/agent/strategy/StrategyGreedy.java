@@ -6,26 +6,22 @@ import java.util.Random;
 import agent.rlagent.RLAgent;
 import environnement.Action;
 import environnement.Etat;
-import environnement.gridworld.ActionGridworld;
+
 /**
  * Strategie qui renvoit une action aleatoire avec probabilite epsilon, une action gloutonne (qui suit la politique de l'agent) sinon
  * Cette classe a acces a un RLAgent par l'intermediaire de sa classe mere.
  * @author lmatignon
  *
  */
-public class StrategyGreedy extends StrategyExploration{
-	//VOTRE CODE
-	//...
-	
-	
-	private Random rand=new Random();
-	
-	
-	
-	public StrategyGreedy(RLAgent agent,double epsilon) {
+public class StrategyGreedy extends StrategyExploration {
+
+	private double epsilon;
+
+	private Random rand = new Random();
+
+	public StrategyGreedy(RLAgent agent, double epsilon) {
 		super(agent);
-		//VOTRE CODE
-		//...
+		this.epsilon = epsilon;
 	}
 
 	/**
@@ -33,19 +29,21 @@ public class StrategyGreedy extends StrategyExploration{
 	 */
 	@Override
 	public Action getAction(Etat _e) {
-		//VOTRE CODE
-		//...
-		
-		return null;
+		List<Action> actions = agent.getActionsLegales(_e);
+		List<Action> politiques = agent.getPolitique(_e);
+
+		if (rand.nextDouble() <= epsilon || politiques.isEmpty()) {
+            if(actions.size() == 0){
+                return null;
+            }
+            else
+			    return actions.get(rand.nextInt(actions.size()));
+		}
+		return politiques.get(rand.nextInt(politiques.size()));
 	}
-
-
 
 	public void setEpsilon(double epsilon) {
-		//VOTRE CODE
-		//...
+		this.epsilon = epsilon;
 	}
-
-
 
 }

@@ -1,143 +1,152 @@
 package agent.rlagent;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import environnement.Action;
 import environnement.Environnement;
 import environnement.Etat;
-import environnement.gridworld.ActionGridworld;
-import environnement.gridworld.EtatGrille;
+
 /**
- * 
+ *
  * @author laetitiamatignon
  *
  */
-public class QLearningAgent extends RLAgent{
-	Map<Etat, Map<Action, Double>> qTable;
+public class QLearningAgent extends RLAgent {
 
-	/**
-	 * 
-	 * @param alpha
-	 * @param gamma
-	 * @param _env
-	 */
-	public QLearningAgent(double alpha, double gamma,
-			Environnement _env) {
-		super(alpha, gamma,_env);
+    private Map<Etat, Map<Action, Double>> qTable;
 
-		this.qTable = new HashMap<Etat, Map<Action, Double>>();
-	}
+    /**
+     *
+     * @param alpha
+     * @param gamma
+     * @param _env
+     */
+    public QLearningAgent(double alpha, double gamma, Environnement _env) {
+        super(alpha, gamma, _env);
 
+        qTable = new HashMap<Etat, Map<Action, Double>>();
+    }
 
-	
-	
-	/**
-	 * renvoi la (les) action(s) de plus forte(s) valeur(s) dans l'etat e
-	 *  
-	 *  renvoi liste vide si aucunes actions possibles dans l'etat 
-	 */
-	@Override
-	public List<Action> getPolitique(Etat e) {
-		List<Action> listActions = new ArrayList<Action>();
-		Map<Action, Double> allActions = this.qTable.get(e);
+    /**
+     * renvoi la (les) action(s) de plus forte(s) valeur(s) dans l'etat e
+     *
+     *  renvoi liste vide si aucunes actions possibles dans l'etat
+     */
+    @Override
+    public List<Action> getPolitique(Etat e) {
+        ArrayList<Action> listOfActions = new ArrayList<Action>();
 
-		if (allActions.isEmpty()){
-			return listActions;
-		}
+        if (qTable.isEmpty() || qTable.get(e) == null) {
+            return this.getActionsLegales(e);
+        }
 
-		Set keys = allActions.keySet();
-		Iterator it = keys.iterator();
-		double maxValue = 0;
-		while (it.hasNext()){
-			Action temp = (Action) it.next();
-			if(allActions.get(temp) < maxValue){
-				maxValue = allActions.get(temp);
-				listActions = new ArrayList<Action>();
-				listActions.add(temp);
-			}
-			if(allActions.get(temp) == maxValue){
-				listActions.add(temp);
-			}
-		}
+        Set set = qTable.get(e).entrySet();
+        Iterator iterator = set.iterator();
+        Double max;
 
-		return listActions;
-	}
-	
-	/**
-	 * @return la valeur d'un etat
-	 */
-	@Override
-	public double getValeur(Etat e) {
-		if(e.estTerminal()){
-			return 0;
-		}
-		else{
-			double maxValue = 0;
-			for(double temp : qTable.get(e).values()){
-				Math.max(maxValue, temp);
-			}
-			return maxValue;
-		}
-	}
+        if (iterator.hasNext()) {
+            Map.Entry<Action, Double> oneAction = (Map.Entry<Action, Double>) iterator.next();
+            max = oneAction.getValue();
+            listOfActions.add(oneAction.getKey());
+            while (iterator.hasNext()) {
+                oneAction = (Map.Entry<Action, Double>) iterator.next();
+                if (oneAction.getValue() == max) {
+                    listOfActions.add(oneAction.getKey());
+                }
+                if (oneAction.getValue() > max) {
+                    listOfActions.clear();
+                    max = oneAction.getValue();
+                    listOfActions.add(oneAction.getKey());
+                }
+            }
+        } else {
+            return this.getActionsLegales(e);
+        }
+        return listOfActions;
+    }
 
-	/**
-	 * 
-	 * @param e
-	 * @param a
-	 * @return Q valeur du couple (e,a)
-	 */
-	@Override
-	public double getQValeur(Etat e, Action a) {
-		return qTable.get(e).get(a);
-	}
-	
-	/**
-	 * setter sur Q-valeur
-	 */
-	@Override
-	public void setQValeur(Etat e, Action a, double d) {
-		qTable.get(e).put(a, d);
+    /**
+     * @return la valeur d'un etat
+     */
+    @Override
+    public double getValeur(Etat e) {
+        if (e.estTerminal() || qTable.isEmpty() || qTable.get(e) == null) {
+            return 0.0;
+        } else {
+            Set set = qTable.get(e).entrySet();
+            double max = -1000;
+            Iterator iterator = set.iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<Action, Double> couple = (Map.Entry<Action, Double>) iterator.next();
+                if (couple.getValue() > max) {
+                    max = couple.getValue();
+                }
+            }
+            return max;
+        }
+    }
 
-		this.vmin = Math.min(this.vmin, d);
-		this.vmax = Math.max(this.vmax, d);
+    /**
+     *
+     * @param e
+     * @param a
+     * @return Q valeur du couple (e,a)
+     */
+    @Override
+    public double getQValeur(Etat e, Action a) {
+        if (!qTable.isEmpty() && qTable.get(e) != null && qTable.get(e).get(a) != null) {
+            return qTable.get(e).get(a);
+        }
+        else
+            return 0.0;
+    }
 
-		this.notifyObs();
-	}
-	
-	
-	/**
-	 *
-	 * mise a jour de la Q-valeur du couple (e,a) apres chaque interaction <etat e,action a, etatsuivant esuivant, recompense reward>
-	 * la mise a jour s'effectue lorsque l'agent est notifie par l'environnement apres avoir realise une action.
-	 * @param e
-	 * @param a
-	 * @param esuivant
-	 * @param reward
-	 */
-	@Override
-	public void endStep(Etat e, Action a, Etat esuivant, double reward) {
-		//VOTRE CODE
-		//...
-	}
+    /**
+     * setter sur Q-valeur
+     */
+    @Override
+    public void setQValeur(Etat e, Action a, double d) {
+        if (qTable.get(e) == null) {
+            qTable.put(e, new HashMap<Action, Double>());
+        }
+        qTable.get(e).put(a, d);
+        this.notifyObs();
 
-	@Override
-	public Action getAction(Etat e) {
-		this.actionChoisie = this.stratExplorationCourante.getAction(e);
-		return this.actionChoisie;
-	}
+    }
 
-	/**
-	 * reinitialise les Q valeurs
-	 */
-	@Override
-	public void reset() {
-		this.episodeNb =0;
-		this.qTable = new HashMap<Etat, Map<Action, Double>>();
-	}
+    /**
+     *
+     * mise a jour de la Q-valeur du couple (e,a) apres chaque interaction <etat e,action a, etatsuivant esuivant, recompense reward>
+     * la mise a jour s'effectue lorsque l'agent est notifie par l'environnement apres avoir realise une action.
+     * @param e
+     * @param a
+     * @param esuivant
+     * @param reward
+     */
+    @Override
+    public void endStep(Etat e, Action a, Etat esuivant, double reward) {
+        Double value = (1 - alpha) * getQValeur(e, a) + alpha * (reward + gamma * getValeur(esuivant));
+        this.setQValeur(e, a, value);
+    }
 
+    @Override
+    public Action getAction(Etat e) {
+        this.actionChoisie = this.stratExplorationCourante.getAction(e);
+        return this.actionChoisie;
+    }
 
-
-	
-
+    /**
+     * reinitialise les Q valeurs
+     */
+    @Override
+    public void reset() {
+        this.episodeNb = 0;
+        qTable.clear();
+    }
 
 }
