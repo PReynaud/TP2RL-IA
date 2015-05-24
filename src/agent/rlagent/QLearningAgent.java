@@ -28,7 +28,6 @@ public class QLearningAgent extends RLAgent {
      */
     public QLearningAgent(double alpha, double gamma, Environnement _env) {
         super(alpha, gamma, _env);
-
         qTable = new HashMap<Etat, Map<Action, Double>>();
     }
 
@@ -46,22 +45,23 @@ public class QLearningAgent extends RLAgent {
         }
 
         Set set = qTable.get(e).entrySet();
-        Iterator iterator = set.iterator();
         Double max;
 
+        /* On itère  à travers toutes les actions*/
+        Iterator iterator = set.iterator();
         if (iterator.hasNext()) {
-            Map.Entry<Action, Double> oneAction = (Map.Entry<Action, Double>) iterator.next();
-            max = oneAction.getValue();
-            listOfActions.add(oneAction.getKey());
+            Map.Entry<Action, Double> currentAction = (Map.Entry<Action, Double>) iterator.next();
+            max = currentAction.getValue();
+            listOfActions.add(currentAction.getKey());
             while (iterator.hasNext()) {
-                oneAction = (Map.Entry<Action, Double>) iterator.next();
-                if (oneAction.getValue() == max) {
-                    listOfActions.add(oneAction.getKey());
+                currentAction = (Map.Entry<Action, Double>) iterator.next();
+                if (currentAction.getValue() == max) {
+                    listOfActions.add(currentAction.getKey());
                 }
-                if (oneAction.getValue() > max) {
+                if (currentAction.getValue() > max) {
                     listOfActions.clear();
-                    max = oneAction.getValue();
-                    listOfActions.add(oneAction.getKey());
+                    max = currentAction.getValue();
+                    listOfActions.add(currentAction.getKey());
                 }
             }
         } else {
@@ -75,6 +75,7 @@ public class QLearningAgent extends RLAgent {
      */
     @Override
     public double getValeur(Etat e) {
+        /* On vérifie qu'on peut bien avoir une valeur de disponible */
         if (e.estTerminal() || qTable.isEmpty() || qTable.get(e) == null) {
             return 0.0;
         } else {
@@ -130,8 +131,8 @@ public class QLearningAgent extends RLAgent {
      */
     @Override
     public void endStep(Etat e, Action a, Etat esuivant, double reward) {
-        Double value = (1 - alpha) * getQValeur(e, a) + alpha * (reward + gamma * getValeur(esuivant));
-        this.setQValeur(e, a, value);
+        Double result = (1 - alpha) * getQValeur(e, a) + alpha * (reward + gamma * getValeur(esuivant));
+        this.setQValeur(e, a, result);
     }
 
     @Override

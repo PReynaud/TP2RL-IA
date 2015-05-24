@@ -14,9 +14,7 @@ import environnement.Etat;
  *
  */
 public class StrategyGreedy extends StrategyExploration {
-
 	private double epsilon;
-
 	private Random rand = new Random();
 
 	public StrategyGreedy(RLAgent agent, double epsilon) {
@@ -29,17 +27,17 @@ public class StrategyGreedy extends StrategyExploration {
 	 */
 	@Override
 	public Action getAction(Etat _e) {
-		List<Action> actions = agent.getActionsLegales(_e);
-		List<Action> politiques = agent.getPolitique(_e);
+		List<Action> listOfActions = agent.getActionsLegales(_e);
+		List<Action> listOfPolitics = agent.getPolitique(_e);
 
-		if (rand.nextDouble() <= epsilon || politiques.isEmpty()) {
-            if(actions.size() == 0){
+		if (rand.nextDouble() <= epsilon || listOfPolitics.isEmpty()) {
+            if(listOfActions.size() == 0){
                 return null;
             }
             else
-			    return actions.get(rand.nextInt(actions.size()));
+			    return listOfActions.get(rand.nextInt(listOfActions.size()));
 		}
-		return politiques.get(rand.nextInt(politiques.size()));
+		return listOfPolitics.get(rand.nextInt(listOfPolitics.size()));
 	}
 
 	public void setEpsilon(double epsilon) {
